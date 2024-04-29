@@ -53,7 +53,6 @@ function CashAppPay({
 
     const abortController = new AbortController();
     const { signal } = abortController;
-    let cashApp: Square.CashAppPay | undefined;
 
     const start = async (signal: AbortSignal) => {
       const paymentRequest = payments?.paymentRequest(createPaymentRequest);
@@ -63,7 +62,7 @@ function CashAppPay({
       }
 
       try {
-        cashApp = await payments?.cashAppPay(paymentRequest, paymentRequestOptions).then((res) => {
+        const cashApp = await payments?.cashAppPay(paymentRequest, paymentRequestOptions).then((res) => {
           if (signal?.aborted) {
             return;
           }
@@ -74,6 +73,10 @@ function CashAppPay({
         });
 
         await cashApp?.attach(`#${id}`, options);
+
+        if (signal.aborted) {
+          await cashApp?.destroy();
+        }
       } catch (error) {
         console.error('Initializing Cash App Pay failed', error);
       }
@@ -83,7 +86,6 @@ function CashAppPay({
 
     return () => {
       abortController.abort();
-      cashApp?.destroy();
     };
   }, [createPaymentRequest, options, paymentRequestOptions, payments]);
 
